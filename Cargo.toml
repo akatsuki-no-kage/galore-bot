@@ -1,11 +1,12 @@
 [package]
 name = "galore"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
-color-eyre = "0.6.3"
+anyhow = "1.0.94"
 config = "0.14.1"
+nucleo = "0.5.0"
 poise = "0.6.1"
 serde = { version = "1.0.215", features = ["derive"] }
 tokio = { version = "1.41.1", features = ["full"] }

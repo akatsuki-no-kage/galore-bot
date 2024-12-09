@@ -1,19 +1,22 @@
 pub mod command;
 pub mod config;
+pub mod data;
 
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::Arc,
+    time::Duration,
+};
 
-use color_eyre::{Result, eyre::Error};
+use anyhow::{Error, Result};
+use data::Data;
 use poise::{
-    Framework, FrameworkOptions,
     serenity_prelude::{Client, GatewayIntents},
+    Framework, FrameworkOptions,
 };
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{fmt::time::ChronoLocal, layer::SubscriberExt, util::SubscriberInitExt};
 
-use config::Config;
-
-pub struct Data;
+pub use config::CONFIG;
 
 type Context<'a> = poise::Context<'a, Data, Error>;
 
@@ -28,16 +31,8 @@ async fn main() -> Result<()> {
         .with(LevelFilter::INFO)
         .init();
 
-    color_eyre::install()?;
-
-    let config: Config = ::config::Config::builder()
-        .add_source(::config::Environment::default().try_parsing(true))
-        .add_source(::config::File::with_name("config"))
-        .build()?
-        .try_deserialize()?;
-
     let options = FrameworkOptions {
-        commands: vec![command::say()],
+        commands: vec![command::say(), command::meme()],
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: Some("~".into()),
             edit_tracker: Some(Arc::new(poise::EditTracker::for_timespan(
@@ -57,7 +52,8 @@ async fn main() -> Result<()> {
             Box::pin(async move {
                 println!("Logged in as {}", _ready.user.name);
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(Data {})
+
+                Data::new(ctx).await
             })
         })
         .options(options)
@@ -65,7 +61,7 @@ async fn main() -> Result<()> {
 
     let intents = GatewayIntents::privileged();
 
-    let mut client = Client::builder(&config.discord_token, intents)
+    let mut client = Client::builder(&CONFIG.discord_token, intents)
         .framework(framework)
         .await?;
 
