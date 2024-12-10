@@ -2,6 +2,9 @@ mod add;
 mod get;
 
 use anyhow::{anyhow, Error, Result};
+use nucleo::pattern::CaseMatching;
+use nucleo::pattern::Normalization;
+use nucleo::Nucleo;
 use poise::serenity_prelude::Message;
 
 use add::*;
@@ -32,6 +35,32 @@ impl TryFrom<&Message> for Meme {
         Ok(Meme { text, image_url })
     }
 }
+
+async fn fuzzy<'a>(
+    finder: &'a mut Nucleo<(u64, String)>,
+    name: &'a str,
+) -> impl Iterator<Item = &'a (u64, String)> + 'a {
+    finder.pattern.reparse(
+        0,
+        name,
+        CaseMatching::Ignore,
+        Normalization::Smart,
+        false,
+    );
+
+    let status = finder.tick(500);
+    if status.changed {
+        tracing::debug!("New result from nucleo");
+    }
+    if !status.running {
+        tracing::debug!("Finish search");
+    }
+
+    let snapshot = finder.snapshot();
+
+    snapshot.matched_items(..).map(|item| item.data)
+}
+
 
 #[poise::command(slash_command, subcommands("add", "get"), subcommand_required)]
 pub async fn meme(_: Context<'_>) -> Result<()> {

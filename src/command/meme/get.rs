@@ -1,66 +1,43 @@
-use anyhow::Result;
-use nucleo::pattern::CaseMatching;
-use poise::{
-    serenity_prelude::{ChannelId, CreateAttachment},
-    CreateReply,
-};
+use anyhow::{anyhow, Result};
+use poise::serenity_prelude::ChannelId;
 
 use crate::{command::Meme, Context, CONFIG};
 
-#[poise::command(slash_command)]
-pub async fn get(ctx: Context<'_>, name: String) -> Result<()> {
+use super::fuzzy;
+
+async fn autocomplete_name<'a>(ctx: Context<'a>, partial: &'a str) -> Vec<String> {
     let mut meme_finder = ctx.data().meme_finder.lock().await;
 
-    meme_finder.pattern.reparse(
-        0,
-        "gei",
-        CaseMatching::Ignore,
-        nucleo::pattern::Normalization::Smart,
-        false,
-    );
+    fuzzy(&mut meme_finder, partial)
+        .await
+        .map(|(_, name)| name.clone())
+        .collect()
+}
 
-    let status = meme_finder.tick(500);
-    if status.changed {
-        tracing::debug!("New result from nucleo");
-    }
-    if !status.running {
-        tracing::debug!("Finish search");
-    }
-
-    let snapshot = meme_finder.snapshot();
-    let a = snapshot
-        .matched_items(..)
-        .map(|item| item.data.1.clone())
-        .collect::<Vec<_>>();
-
-    tracing::warn!("{:?}", a);
-
-    let Some(item) = snapshot.get_matched_item(0) else {
-        let reply = CreateReply::default()
-            .content(format!("No matched meme with name {}", name))
-            .ephemeral(true);
-
-        ctx.send(reply).await?;
-
-        return Ok(());
-    };
-
-    let (id, name) = item.data;
+#[poise::command(slash_command)]
+pub async fn get(
+    ctx: Context<'_>,
+    #[autocomplete = "autocomplete_name"] name: String,
+) -> Result<()> {
+    let mut meme_finder = ctx.data().meme_finder.lock().await;
+    let id = fuzzy(&mut meme_finder, &name)
+        .await
+        .next()
+        .map(|(id, _)| *id)
+        .ok_or(anyhow!("No matching meme"))?;
 
     let meme_raw = ChannelId::new(CONFIG.data_channel_id)
-        .message(ctx.http(), *id)
+        .message(ctx.http(), id)
         .await?;
 
     let Meme { text, image_url } = Meme::try_from(&meme_raw)?;
 
-    let mut reply = CreateReply::default()
-        .reply(true)
-        .content(format!("{}{}{}", name, CONFIG.content_separator, text));
+    let mut content = text;
     if let Some(image_url) = image_url {
-        reply = reply.attachment(CreateAttachment::url(ctx.http(), &image_url).await?);
+        content.push('\n');
+        content.push_str(&image_url);
     }
-
-    ctx.send(reply).await?;
+    ctx.reply(content).await?;
 
     Ok(())
 }
