@@ -2,10 +2,7 @@ pub mod command;
 pub mod config;
 pub mod data;
 
-use std::{
-    sync::Arc,
-    time::Duration,
-};
+use std::{sync::Arc, time::Duration};
 
 use anyhow::{Error, Result};
 use data::Data;
@@ -32,7 +29,7 @@ async fn main() -> Result<()> {
         .init();
 
     let options = FrameworkOptions {
-        commands: vec![command::say(), command::meme()],
+        commands: vec![command::say(), command::meme(), command::music()],
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: Some("~".into()),
             edit_tracker: Some(Arc::new(poise::EditTracker::for_timespan(
@@ -46,6 +43,8 @@ async fn main() -> Result<()> {
         },
         ..Default::default()
     };
+    let manager = songbird::Songbird::serenity();
+    let manager_clone = Arc::clone(&manager);
 
     let framework = Framework::builder()
         .setup(move |ctx, _ready, framework| {
@@ -53,15 +52,16 @@ async fn main() -> Result<()> {
                 println!("Logged in as {}", _ready.user.name);
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
 
-                Data::new(ctx).await
+                Data::new(ctx, manager_clone).await
             })
         })
         .options(options)
         .build();
 
-    let intents = GatewayIntents::privileged();
+    let intents = GatewayIntents::privileged() | GatewayIntents::GUILD_VOICE_STATES;
 
     let mut client = Client::builder(&CONFIG.discord_token, intents)
+        .voice_manager_arc(manager)
         .framework(framework)
         .await?;
 
