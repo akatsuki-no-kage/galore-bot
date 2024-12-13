@@ -1,15 +1,12 @@
 use anyhow::Result;
-use songbird::{
-    input::{Compose, Input, LiveInput, YoutubeDl},
-    tracks::Track,
-};
+use songbird::input::{Compose, Input, LiveInput, YoutubeDl};
 
 use crate::Context;
 
 #[poise::command(slash_command, guild_only)]
 pub async fn play(
     ctx: Context<'_>,
-    #[description = "Which lead to music video in youtube"] url: String,
+    #[description = "Url to music video in youtube"] url: String,
 ) -> Result<()> {
     let guild_id = ctx.guild_id().unwrap();
     let manager = &ctx.data().songbird;
@@ -23,8 +20,8 @@ pub async fn play(
         } else {
             YoutubeDl::new(ctx.data().http_client.clone(), url)
         };
-        let audio = src.clone().create_async().await?;
 
+        let audio = src.clone().create_async().await?;
         let input = Input::Live(LiveInput::Raw(audio), Some(Box::new(src)));
         handler.play_input(input);
         ctx.say("Playing song!").await?;
