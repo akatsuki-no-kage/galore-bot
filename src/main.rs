@@ -1,6 +1,9 @@
 pub mod command;
 pub mod config;
 pub mod data;
+pub mod messages;
+pub mod models;
+pub mod utils;
 
 use std::{sync::Arc, time::Duration};
 
@@ -58,7 +61,7 @@ async fn main() -> Result<()> {
         .options(options)
         .build();
 
-    let intents = GatewayIntents::privileged() | GatewayIntents::GUILD_VOICE_STATES;
+    let intents = GatewayIntents::privileged() | GatewayIntents::GUILDS;
 
     let mut client = Client::builder(&CONFIG.discord_token, intents)
         .voice_manager_arc(manager)
