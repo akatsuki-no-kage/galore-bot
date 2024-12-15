@@ -8,7 +8,13 @@ anyhow = "1.0.94"
 config = "0.14.1"
 nucleo = "0.5.0"
 poise = "0.6.1"
+reqwest = { version = "0.11.22" }
 serde = { version = "1.0.215", features = ["derive"] }
+songbird = "0.4.6"
 tokio = { version = "1.41.1", features = ["full"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["fmt", "chrono"] }
+
+[dependencies.symphonia]
+version = "0.5.4"
+features = ["mp3", "aac", "vorbis", "isomp4"]

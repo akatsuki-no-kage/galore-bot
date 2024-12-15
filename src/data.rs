@@ -1,8 +1,8 @@
-use std::sync::Arc;
-
 use anyhow::{anyhow, Result};
 use nucleo::Nucleo;
 use poise::serenity_prelude::{CacheHttp, ChannelId, Context, GetMessages};
+use reqwest::Client as HttpClient;
+use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use crate::CONFIG;
@@ -48,12 +48,19 @@ pub async fn build_finder(ctx: &Context) -> Result<Nucleo<(u64, String)>> {
 
 pub struct Data {
     pub meme_finder: Mutex<Nucleo<(u64, String)>>,
+    pub http_client: HttpClient,
+    pub songbird: Arc<songbird::Songbird>,
 }
 
 impl Data {
-    pub async fn new(ctx: &Context) -> Result<Self> {
+    pub async fn new(ctx: &Context, songbird: Arc<songbird::Songbird>) -> Result<Self> {
         let meme_finder = Mutex::new(build_finder(ctx).await?);
+        let http_client = HttpClient::new();
 
-        Ok(Self { meme_finder })
+        Ok(Self {
+            meme_finder,
+            http_client,
+            songbird,
+        })
     }
 }
