@@ -2,7 +2,6 @@ pub mod command;
 pub mod config;
 pub mod data;
 pub mod messages;
-pub mod models;
 pub mod utils;
 
 use std::{sync::Arc, time::Duration};

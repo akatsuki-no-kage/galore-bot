@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
-use poise::serenity_prelude::ChannelId;
+use poise::{serenity_prelude::ChannelId, CreateReply};
 
-use crate::{command::Meme, Context, CONFIG};
+use crate::{Context, CONFIG};
 
 use super::fuzzy;
 
@@ -13,7 +13,7 @@ async fn autocomplete_name<'a>(
 }
 
 #[poise::command(slash_command)]
-pub async fn get(
+pub async fn delete(
     ctx: Context<'_>,
     #[autocomplete = "autocomplete_name"] name: String,
 ) -> Result<()> {
@@ -24,18 +24,15 @@ pub async fn get(
         .ok_or(anyhow!("Meme does not exist"))?
         .value();
 
-    let meme_raw = ChannelId::new(CONFIG.data_channel_id)
-        .message(ctx.http(), id)
-        .await?;
+    ChannelId::new(CONFIG.data_channel_id).delete_message(ctx.http(), id).await?;
+    ctx.data().memes.remove(&name);
 
-    let Meme { text, image_url } = Meme::try_from(&meme_raw)?;
-
-    let mut content = text;
-    if let Some(image_url) = image_url {
-        content.push('\n');
-        content.push_str(&image_url);
-    }
-    ctx.reply(content).await?;
+    ctx.send(
+        CreateReply::default()
+            .ephemeral(true)
+            .content(format!("Delete {}", name)),
+    )
+    .await?;
 
     Ok(())
 }

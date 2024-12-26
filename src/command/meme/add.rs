@@ -1,10 +1,15 @@
-use anyhow::Result;
-use poise::serenity_prelude::{Attachment, ChannelId, CreateAttachment, CreateMessage};
+use anyhow::{bail, Result};
+use poise::{
+    serenity_prelude::{Attachment, ChannelId, CreateAttachment, CreateMessage},
+    CreateReply,
+};
 
 use crate::{Context, CONFIG};
 
 #[poise::command(slash_command)]
 pub async fn add(ctx: Context<'_>, name: String, text: String, image: Attachment) -> Result<()> {
+    ctx.defer().await?;
+
     let id = ChannelId::new(CONFIG.data_channel_id)
         .send_files(
             ctx.http(),
@@ -16,12 +21,19 @@ pub async fn add(ctx: Context<'_>, name: String, text: String, image: Attachment
         .id
         .get();
 
-    let meme_finder = ctx.data().meme_finder.lock().await;
-    let injector = meme_finder.injector();
+    let memes = &ctx.data().memes;
 
-    injector.push((id, name), |(_, name), row| {
-        row[0] = name.as_str().into();
-    });
+    if memes.contains_key(&name) {
+        bail!("Meme already existed");
+    }
+
+    ctx.send(
+        CreateReply::default()
+            .ephemeral(true)
+            .content(format!("{} added", name)),
+    )
+    .await?;
+    memes.insert(name, id);
 
     Ok(())
 }
