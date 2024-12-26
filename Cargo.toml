@@ -6,7 +6,9 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.94"
 config = "0.14.1"
-nucleo = "0.5.0"
+dashmap = { version = "6.1.0", features = ["rayon"] }
+fuzzy-matcher = "0.3.7"
+itertools = "0.13.0"
 poise = "0.6.1"
 reqwest = { version = "0.11.22" }
 serde = { version = "1.0.215", features = ["derive"] }
