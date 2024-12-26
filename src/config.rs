@@ -16,7 +16,7 @@ pub struct Config {
     pub content_separator: String,
 }
 
-pub const CONFIG: LazyLock<Config> = LazyLock::new(|| {
+pub static CONFIG: LazyLock<Config> = LazyLock::new(|| {
     ::config::Config::builder()
         .add_source(::config::Environment::default().try_parsing(true))
         .add_source(::config::File::with_name("config"))
