@@ -5,11 +5,12 @@ use anyhow::{anyhow, Error, Result};
 use dashmap::DashMap;
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
-use itertools::Itertools;
 use poise::serenity_prelude::Message;
 
 use add::*;
 use get::*;
+use rayon::iter::IntoParallelRefIterator;
+use rayon::iter::ParallelIterator;
 
 use crate::Context;
 use crate::CONFIG;
@@ -42,13 +43,13 @@ async fn fuzzy<'a>(
     name: &'a str,
 ) -> impl Iterator<Item = String> + 'a {
     let matcher = SkimMatcherV2::default();
-
-    finder
-        .iter()
+    let mut matches: Vec<_> = finder
+        .par_iter()
         .map(|entry| entry.key().to_string())
         .flat_map(|key| matcher.fuzzy_match(&key, name).map(|score| (key, score)))
-        .sorted_by(|(_, a), (_, b)| b.cmp(&a))
-        .map(|(key, _)| key)
+        .collect();
+    matches.sort_by(|(_, a), (_, b)| b.cmp(&a));
+    matches.into_iter().map(|(key, _)| key)
 }
 
 #[poise::command(slash_command, subcommands("add", "get"), subcommand_required)]

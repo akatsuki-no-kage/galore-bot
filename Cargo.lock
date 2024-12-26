@@ -945,6 +945,7 @@ dependencies = [
  "fuzzy-matcher",
  "itertools",
  "poise",
+ "rayon",
  "reqwest",
  "serde",
  "songbird",
