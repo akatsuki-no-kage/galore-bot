@@ -1,4 +1,5 @@
 mod add;
+mod delete;
 mod get;
 
 use anyhow::{anyhow, Error, Result};
@@ -6,11 +7,12 @@ use dashmap::DashMap;
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use poise::serenity_prelude::Message;
-
-use add::*;
-use get::*;
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
+
+use add::*;
+use delete::*;
+use get::*;
 
 use crate::Context;
 use crate::CONFIG;
@@ -48,11 +50,15 @@ async fn fuzzy<'a>(
         .map(|entry| entry.key().to_string())
         .flat_map(|key| matcher.fuzzy_match(&key, name).map(|score| (key, score)))
         .collect();
-    matches.sort_by(|(_, a), (_, b)| b.cmp(&a));
+    matches.sort_by(|(_, a), (_, b)| b.cmp(a));
     matches.into_iter().map(|(key, _)| key)
 }
 
-#[poise::command(slash_command, subcommands("add", "get"), subcommand_required)]
+#[poise::command(
+    slash_command,
+    subcommands("add", "get", "delete"),
+    subcommand_required
+)]
 pub async fn meme(_: Context<'_>) -> Result<()> {
     Ok(())
 }
