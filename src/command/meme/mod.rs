@@ -2,9 +2,10 @@ mod add;
 mod get;
 
 use anyhow::{anyhow, Error, Result};
-use nucleo::pattern::CaseMatching;
-use nucleo::pattern::Normalization;
-use nucleo::Nucleo;
+use dashmap::DashMap;
+use fuzzy_matcher::skim::SkimMatcherV2;
+use fuzzy_matcher::FuzzyMatcher;
+use itertools::Itertools;
 use poise::serenity_prelude::Message;
 
 use add::*;
@@ -37,30 +38,18 @@ impl TryFrom<&Message> for Meme {
 }
 
 async fn fuzzy<'a>(
-    finder: &'a mut Nucleo<(u64, String)>,
+    finder: &'a DashMap<String, u64>,
     name: &'a str,
-) -> impl Iterator<Item = &'a (u64, String)> + 'a {
-    finder.pattern.reparse(
-        0,
-        name,
-        CaseMatching::Ignore,
-        Normalization::Smart,
-        false,
-    );
+) -> impl Iterator<Item = String> + 'a {
+    let matcher = SkimMatcherV2::default();
 
-    let status = finder.tick(500);
-    if status.changed {
-        tracing::debug!("New result from nucleo");
-    }
-    if !status.running {
-        tracing::debug!("Finish search");
-    }
-
-    let snapshot = finder.snapshot();
-
-    snapshot.matched_items(..).map(|item| item.data)
+    finder
+        .iter()
+        .map(|entry| entry.key().to_string())
+        .flat_map(|key| matcher.fuzzy_match(&key, name).map(|score| (key, score)))
+        .sorted_by(|(_, a), (_, b)| b.cmp(&a))
+        .map(|(key, _)| key)
 }
-
 
 #[poise::command(slash_command, subcommands("add", "get"), subcommand_required)]
 pub async fn meme(_: Context<'_>) -> Result<()> {
