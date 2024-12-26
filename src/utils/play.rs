@@ -9,7 +9,7 @@ use songbird::{
 };
 
 pub async fn play_url(
-    http_client: Client,
+    http_client: &Client,
     manager: &Arc<Songbird>,
     guild_id: GuildId,
     url: String,

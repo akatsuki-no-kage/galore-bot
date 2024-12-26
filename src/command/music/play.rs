@@ -23,7 +23,7 @@ pub async fn play(
     match vc_state {
         VoiceChannelStates::Same => {
             ctx.defer().await?;
-            let meta = play_url(ctx.data().http_client.clone(), manager, guild_id, url).await?;
+            let meta = play_url(&ctx.data().http_client, manager, guild_id, url).await?;
             ctx.say(Message {
                 kind: MessageKind::Play {
                     title: meta.title.as_ref().unwrap(),
