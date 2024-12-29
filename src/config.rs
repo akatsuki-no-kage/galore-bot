@@ -6,6 +6,10 @@ fn default_content_separator() -> String {
     "\n\n\n".to_string()
 }
 
+fn default_chat_model() -> String {
+    "llama3.2".to_string()
+}
+
 #[derive(Deserialize)]
 pub struct Config {
     pub discord_token: String,
@@ -14,6 +18,9 @@ pub struct Config {
 
     #[serde(default = "default_content_separator")]
     pub content_separator: String,
+
+    #[serde(default = "default_chat_model")]
+    pub chat_model: String,
 }
 
 pub static CONFIG: LazyLock<Config> = LazyLock::new(|| {
