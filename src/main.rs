@@ -1,6 +1,7 @@
 pub mod command;
 pub mod config;
 pub mod data;
+pub mod event_handler;
 pub mod messages;
 pub mod utils;
 
@@ -16,6 +17,7 @@ use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{fmt::time::ChronoLocal, layer::SubscriberExt, util::SubscriberInitExt};
 
 pub use config::CONFIG;
+use event_handler::event_handler;
 
 type Context<'a> = poise::Context<'a, Data, Error>;
 
@@ -43,6 +45,9 @@ async fn main() -> Result<()> {
             ],
             ..Default::default()
         },
+        event_handler: |ctx, event, framework, data| {
+            Box::pin(event_handler(ctx, event, framework, data))
+        },
         ..Default::default()
     };
     let manager = songbird::Songbird::serenity();
@@ -51,7 +56,6 @@ async fn main() -> Result<()> {
     let framework = Framework::builder()
         .setup(move |ctx, _ready, framework| {
             Box::pin(async move {
-                println!("Logged in as {}", _ready.user.name);
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
 
                 Data::new(ctx, manager_clone).await
@@ -60,7 +64,8 @@ async fn main() -> Result<()> {
         .options(options)
         .build();
 
-    let intents = GatewayIntents::privileged() | GatewayIntents::GUILDS;
+    let intents =
+        GatewayIntents::non_privileged() | GatewayIntents::GUILDS | GatewayIntents::MESSAGE_CONTENT;
 
     let mut client = Client::builder(&CONFIG.discord_token, intents)
         .voice_manager_arc(manager)
