@@ -18,7 +18,7 @@ pub async fn message_event_handler(
         return Ok(());
     }
 
-    let should_reply = rand::thread_rng().gen_bool(1e-4);
+    let should_reply = rand::thread_rng().gen_bool(CONFIG.random_reply_probabiliy);
     if !should_reply && !message.mentions.contains(&ctx.cache.current_user()) {
         return Ok(());
     }
