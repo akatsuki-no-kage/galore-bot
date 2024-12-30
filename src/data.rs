@@ -1,5 +1,4 @@
 use anyhow::{anyhow, Result};
-use dashmap::DashMap;
 use ollama_rs::generation::chat::ChatMessage;
 use poise::serenity_prelude::{CacheHttp, ChannelId, Context, GetMessages};
 use reqwest::Client as HttpClient;
@@ -8,8 +7,8 @@ use std::{collections::HashMap, sync::Arc};
 
 use crate::CONFIG;
 
-pub async fn get_memes(ctx: &Context) -> Result<DashMap<String, u64>> {
-    let memes = DashMap::new();
+pub async fn get_memes(ctx: &Context) -> Result<RwLock<HashMap<String, u64>>> {
+    let mut memes = HashMap::new();
 
     let channel = ChannelId::new(CONFIG.data_channel_id);
     let mut last_id = None;
@@ -40,11 +39,11 @@ pub async fn get_memes(ctx: &Context) -> Result<DashMap<String, u64>> {
         last_id = fetched_meme.last().map(|message| message.id);
     }
 
-    Ok(memes)
+    Ok(RwLock::new(memes))
 }
 
 pub struct Data {
-    pub memes: DashMap<String, u64>,
+    pub memes: RwLock<HashMap<String, u64>>,
     pub http_client: HttpClient,
     pub songbird: Arc<songbird::Songbird>,
     pub ai_chat_history: Mutex<HashMap<u64, Vec<ChatMessage>>>,
