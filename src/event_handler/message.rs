@@ -4,6 +4,7 @@ use ollama_rs::{
     Ollama,
 };
 use poise::serenity_prelude::{self as serenity, CreateMessage, MESSAGE_CODE_LIMIT};
+use rand::Rng;
 use text_splitter::MarkdownSplitter;
 
 use crate::{data::Data, util, CONFIG};
@@ -13,7 +14,12 @@ pub async fn message_event_handler(
     message: &serenity::Message,
     data: &Data,
 ) -> Result<()> {
-    if !message.mentions.contains(&ctx.cache.current_user()) {
+    if message.author.id == ctx.cache.current_user().id {
+        return Ok(());
+    }
+
+    let should_reply = rand::thread_rng().gen_bool(CONFIG.random_reply_probabiliy);
+    if !should_reply && !message.mentions.contains(&ctx.cache.current_user()) {
         return Ok(());
     }
 
@@ -43,9 +49,7 @@ pub async fn message_event_handler(
     let splitter = MarkdownSplitter::new(MESSAGE_CODE_LIMIT);
     let chunks: Vec<_> = splitter.chunks(&response).collect();
 
-    message
-        .reply_ping(&ctx.http, chunks[0])
-        .await?;
+    message.reply_mention(&ctx.http, chunks[0]).await?;
 
     for chunk in chunks.into_iter().skip(1) {
         message

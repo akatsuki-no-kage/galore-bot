@@ -10,6 +10,10 @@ fn default_chat_model() -> String {
     "llama3.2".to_string()
 }
 
+fn default_random_reply_probability() -> f64 {
+    1e-4
+}
+
 #[derive(Deserialize)]
 pub struct Config {
     pub discord_token: String,
@@ -21,6 +25,9 @@ pub struct Config {
 
     #[serde(default = "default_chat_model")]
     pub chat_model: String,
+
+    #[serde(default = "default_random_reply_probability")]
+    pub random_reply_probabiliy: f64,
 }
 
 pub static CONFIG: LazyLock<Config> = LazyLock::new(|| {
