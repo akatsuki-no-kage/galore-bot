@@ -3,7 +3,7 @@ use std::ops::Deref;
 
 use crate::{
     messages::{Message, MessageKind},
-    utils::guild::{GuildUtils, VoiceChannelStates},
+    util::guild::{GuildUtils, VoiceChannelStates},
     Context,
 };
 

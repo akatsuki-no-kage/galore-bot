@@ -3,7 +3,7 @@ pub mod config;
 pub mod data;
 pub mod event_handler;
 pub mod messages;
-pub mod utils;
+pub mod util;
 
 use std::{sync::Arc, time::Duration};
 

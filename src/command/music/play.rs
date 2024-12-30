@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use crate::{
     messages::{Message, MessageKind},
-    utils::{
+    util::{
         guild::{GuildUtils, VoiceChannelStates},
         play::play_url,
     },
