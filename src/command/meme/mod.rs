@@ -2,14 +2,9 @@ mod add;
 mod delete;
 mod get;
 
-use std::collections::HashMap;
 
 use anyhow::{anyhow, Error, Result};
-use fuzzy_matcher::skim::SkimMatcherV2;
-use fuzzy_matcher::FuzzyMatcher;
 use poise::serenity_prelude::Message;
-use rayon::iter::IntoParallelRefIterator;
-use rayon::iter::ParallelIterator;
 
 use add::*;
 use delete::*;
@@ -39,17 +34,6 @@ impl TryFrom<&Message> for Meme {
 
         Ok(Meme { text, image_url })
     }
-}
-
-async fn fuzzy(finder: &HashMap<String, u64>, name: &str) -> Vec<String> {
-    let matcher = SkimMatcherV2::default();
-    let mut matches: Vec<_> = finder
-        .par_iter()
-        .map(|(key, _)| key.to_string())
-        .flat_map(|key| matcher.fuzzy_match(&key, name).map(|score| (key, score)))
-        .collect();
-    matches.sort_by(|(_, a), (_, b)| b.cmp(a));
-    matches.into_iter().map(|(key, _)| key).collect()
 }
 
 #[poise::command(
