@@ -64,8 +64,7 @@ async fn main() -> Result<()> {
         .options(options)
         .build();
 
-    let intents =
-        GatewayIntents::non_privileged() | GatewayIntents::GUILDS | GatewayIntents::MESSAGE_CONTENT;
+    let intents = GatewayIntents::all() | GatewayIntents::GUILD_MESSAGE_REACTIONS;
 
     let mut client = Client::builder(&CONFIG.discord_token, intents)
         .voice_manager_arc(manager)
