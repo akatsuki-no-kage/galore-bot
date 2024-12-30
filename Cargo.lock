@@ -991,6 +991,7 @@ dependencies = [
  "itertools",
  "ollama-rs",
  "poise",
+ "rand",
  "rayon",
  "reqwest 0.11.27",
  "serde",
