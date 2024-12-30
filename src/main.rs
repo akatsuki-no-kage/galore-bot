@@ -33,7 +33,12 @@ async fn main() -> Result<()> {
         .init();
 
     let options = FrameworkOptions {
-        commands: vec![command::say(), command::meme(), command::music()],
+        commands: vec![
+            command::help(),
+            command::say(),
+            command::meme(),
+            command::music(),
+        ],
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: Some("~".into()),
             edit_tracker: Some(Arc::new(poise::EditTracker::for_timespan(

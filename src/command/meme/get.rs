@@ -1,14 +1,11 @@
-use std::ops::Deref;
-
 use anyhow::{anyhow, Result};
 use poise::serenity_prelude::ChannelId;
+use rayon::iter::ParallelBridge;
 
-use crate::{command::Meme, Context, CONFIG};
-
-use super::fuzzy;
+use crate::{command::Meme, util, Context, CONFIG};
 
 async fn autocomplete_name<'a>(ctx: Context<'a>, partial: &'a str) -> Vec<String> {
-    fuzzy(ctx.data().memes.read().await.deref(), partial).await
+    util::fuzzy(ctx.data().memes.read().await.keys().par_bridge(), partial).await
 }
 
 #[poise::command(slash_command)]
