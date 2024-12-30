@@ -9,18 +9,22 @@ pub async fn message_event_handler(
     data: &Data,
 ) -> Result<()> {
     if !message.mentions.contains(&ctx.cache.current_user()) {
-        tracing::info!("Test");
         return Ok(());
     }
 
+    let prompt = utils::make_ai_prompt(message, &ctx.cache);
+    tracing::info!(prompt);
+
     let channel_id = message.channel_id.get();
+
     let pages = utils::generate_ai_response(
-        message.content_safe(&ctx.cache),
+        prompt,
         CONFIG.chat_model.clone(),
         data.ai_chat_history
+            .lock()
+            .await
             .entry(channel_id)
-            .or_default()
-            .value_mut(),
+            .or_default(),
     )
     .await?;
     utils::reply_paginator(message, pages, ctx).await
