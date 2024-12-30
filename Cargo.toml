@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.94"
 config = "0.15.4"
-dashmap = { version = "6.1.0", features = ["rayon"] }
 fuzzy-matcher = "0.3.7"
 itertools = "0.13.0"
 ollama-rs = { git = "https://github.com/pepperoni21/ollama-rs" }
