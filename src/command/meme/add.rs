@@ -21,7 +21,7 @@ pub async fn add(ctx: Context<'_>, name: String, text: String, image: Attachment
         .id
         .get();
 
-    let memes = &ctx.data().memes;
+    let mut memes = ctx.data().memes.write().await;
 
     if memes.contains_key(&name) {
         bail!("Meme already existed");

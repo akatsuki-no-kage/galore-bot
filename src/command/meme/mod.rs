@@ -2,8 +2,9 @@ mod add;
 mod delete;
 mod get;
 
+use std::collections::HashMap;
+
 use anyhow::{anyhow, Error, Result};
-use dashmap::DashMap;
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use poise::serenity_prelude::Message;
@@ -40,18 +41,15 @@ impl TryFrom<&Message> for Meme {
     }
 }
 
-async fn fuzzy<'a>(
-    finder: &'a DashMap<String, u64>,
-    name: &'a str,
-) -> impl Iterator<Item = String> + 'a {
+async fn fuzzy(finder: &HashMap<String, u64>, name: &str) -> Vec<String> {
     let matcher = SkimMatcherV2::default();
     let mut matches: Vec<_> = finder
         .par_iter()
-        .map(|entry| entry.key().to_string())
+        .map(|(key, _)| key.to_string())
         .flat_map(|key| matcher.fuzzy_match(&key, name).map(|score| (key, score)))
         .collect();
     matches.sort_by(|(_, a), (_, b)| b.cmp(a));
-    matches.into_iter().map(|(key, _)| key)
+    matches.into_iter().map(|(key, _)| key).collect()
 }
 
 #[poise::command(
