@@ -1,5 +1,10 @@
-use anyhow::Result;
-use poise::serenity_prelude as serenity;
+use anyhow::{anyhow, Result};
+use ollama_rs::{
+    generation::chat::{request::ChatMessageRequest, ChatMessage},
+    Ollama,
+};
+use poise::serenity_prelude::{self as serenity, CreateMessage, MESSAGE_CODE_LIMIT};
+use text_splitter::MarkdownSplitter;
 
 use crate::{data::Data, util, CONFIG};
 
@@ -17,15 +22,37 @@ pub async fn message_event_handler(
 
     let channel_id = message.channel_id.get();
 
-    let pages = util::generate_ai_response(
-        prompt,
-        CONFIG.chat_model.clone(),
-        data.ai_chat_history
-            .lock()
-            .await
-            .entry(channel_id)
-            .or_default(),
-    )
-    .await?;
-    util::reply_paginator(message, pages, ctx).await
+    let mut ollama = Ollama::default();
+
+    let chat_message = ChatMessage::user(prompt);
+
+    let response = ollama
+        .send_chat_messages_with_history(
+            data.ai_chat_history
+                .lock()
+                .await
+                .entry(channel_id)
+                .or_default(),
+            ChatMessageRequest::new(CONFIG.chat_model.clone(), vec![chat_message]),
+        )
+        .await
+        .map_err(|err| anyhow!(err.to_string()))?
+        .message
+        .content;
+
+    let splitter = MarkdownSplitter::new(MESSAGE_CODE_LIMIT);
+    let chunks: Vec<_> = splitter.chunks(&response).collect();
+
+    message
+        .reply_ping(&ctx.http, chunks[0])
+        .await?;
+
+    for chunk in chunks.into_iter().skip(1) {
+        message
+            .channel_id
+            .send_message(&ctx.http, CreateMessage::new().content(chunk))
+            .await?;
+    }
+
+    Ok(())
 }
