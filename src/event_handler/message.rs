@@ -1,8 +1,7 @@
 use anyhow::Result;
-use ollama_rs::generation::completion::request::GenerationRequest;
-use poise::serenity_prelude::{self as serenity, CacheHttp};
+use poise::serenity_prelude as serenity;
 
-use crate::{data::Data, CONFIG};
+use crate::{data::Data, utils, CONFIG};
 
 pub async fn message_event_handler(
     ctx: &serenity::Context,
@@ -10,21 +9,19 @@ pub async fn message_event_handler(
     data: &Data,
 ) -> Result<()> {
     if !message.mentions.contains(&ctx.cache.current_user()) {
+        tracing::info!("Test");
         return Ok(());
     }
 
-    println!("{}", message.content);
-
-    let response = data
-        .ollama
-        .generate(GenerationRequest::new(
-            CONFIG.chat_model.clone(),
-            message.content_safe(ctx.cache().unwrap()),
-        ))
-        .await?
-        .response;
-
-    message.reply_ping(ctx.http(), response).await?;
-
-    Ok(())
+    let channel_id = message.channel_id.get();
+    let pages = utils::generate_ai_response(
+        message.content_safe(&ctx.cache),
+        CONFIG.chat_model.clone(),
+        data.ai_chat_history
+            .entry(channel_id)
+            .or_default()
+            .value_mut(),
+    )
+    .await?;
+    utils::reply_paginator(message, pages, ctx).await
 }

@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 use dashmap::DashMap;
-use ollama_rs::Ollama;
+use ollama_rs::generation::chat::ChatMessage;
 use poise::serenity_prelude::{CacheHttp, ChannelId, Context, GetMessages};
 use reqwest::Client as HttpClient;
 use std::sync::Arc;
@@ -46,7 +46,7 @@ pub struct Data {
     pub memes: DashMap<String, u64>,
     pub http_client: HttpClient,
     pub songbird: Arc<songbird::Songbird>,
-    pub ollama: Ollama,
+    pub ai_chat_history: DashMap<u64, Vec<ChatMessage>>,
 }
 
 impl Data {
@@ -55,7 +55,7 @@ impl Data {
             memes: get_memes(ctx).await?,
             http_client: HttpClient::new(),
             songbird,
-            ollama: Ollama::default()
+            ai_chat_history: DashMap::new(),
         })
     }
 }
