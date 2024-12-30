@@ -1,7 +1,7 @@
 use anyhow::Result;
 use poise::serenity_prelude as serenity;
 
-use crate::{data::Data, utils, CONFIG};
+use crate::{data::Data, util, CONFIG};
 
 pub async fn message_event_handler(
     ctx: &serenity::Context,
@@ -12,12 +12,12 @@ pub async fn message_event_handler(
         return Ok(());
     }
 
-    let prompt = utils::make_ai_prompt(message, &ctx.cache);
+    let prompt = util::make_ai_prompt(message, &ctx.cache);
     tracing::info!(prompt);
 
     let channel_id = message.channel_id.get();
 
-    let pages = utils::generate_ai_response(
+    let pages = util::generate_ai_response(
         prompt,
         CONFIG.chat_model.clone(),
         data.ai_chat_history
@@ -27,5 +27,5 @@ pub async fn message_event_handler(
             .or_default(),
     )
     .await?;
-    utils::reply_paginator(message, pages, ctx).await
+    util::reply_paginator(message, pages, ctx).await
 }
